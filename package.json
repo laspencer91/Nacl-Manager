@@ -1,0 +1,16 @@
+{
+  "name": "nacl-manager",
+  "version": "1.0.0",
+  "description": "Management took for NACL database",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Logan Spencer",
+  "license": "ISC",
+  "dependencies": {
+    "mongodb": "^3.0.7",
+    "mongoose": "^5.0.15",
+    "yargs": "^11.0.0"
+  }
+}
