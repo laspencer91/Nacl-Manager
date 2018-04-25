@@ -5,6 +5,7 @@ var { Player } = require('../mongo-models/Player.js');
 var { Match }  = require('../mongo-models/Match.js');
 var { Team }   = require('../mongo-models/Team.js');
 const LOGGER   = require('../gen-utils/logging.js');
+const ARRAYS   = require('../gen-utils/arrayUtil.js');
 
 // Create a player after making sure the team specified exists and the player does not exist
 var createPlayer = (pName, pTeam) => {
@@ -16,9 +17,9 @@ var createPlayer = (pName, pTeam) => {
                 }
                 else {
                     let p = new Player({name: pName, teamId: teamFound._id});
+
                     savePlayer(p, (savedPlayer) => {
-                        teamFound.playerIdList.push(savedPlayer._id);
-                        saveTeam(teamFound);
+                        addPlayerToTeam(savedPlayer, teamFound, true);
                     });
                 }
             });
@@ -45,6 +46,44 @@ var createTeam = (tName, tShortname) => {
             }
         });
     });
+}
+
+// Create a team after making sure that the shortname and long name do not already exist
+var changeTeam = (tPlayerName, tTeamName) => {
+    findPlayerByName(tPlayerName, (playerFound) => {
+        if (!playerFound) {
+            LOGGER.logAndEnd(tPlayerName + " was not found. Try again."); return;
+        }
+        Team.findById(playerFound.teamId, (err, oldTeam) => {
+            if (err) return console.error(err);
+
+            findTeamByName(tTeamName, (teamFound) => {
+                if (!teamFound) {
+                    LOGGER.logAndEnd(`The team ${tTeamName} was not found. Try again`); return;
+                }
+                removePlayerFromTeam(playerFound, oldTeam, false);
+                addPlayerToTeam(playerFound, teamFound, false);
+
+                saveTeam(oldTeam);
+                saveTeam(teamFound);
+                savePlayer(playerFound);
+            });
+        });
+    })
+}
+
+function addPlayerToTeam(player, team, save) {
+    player.teamId = team._id; 
+    player.joinTeamDate = Date.now();
+    team.playerIdList.push(player._id);
+
+    if (save) { savePlayer(player, () => saveTeam(team)); }
+}
+function removePlayerFromTeam(player, team, save) {
+    player.teamHistory.push({teamId: player._id, teamName: team.name, leaveDate: Date.now()}); // Save curr team in hist
+    ARRAYS.remove(team.playerIdList, player._id);
+
+    if (save) { savePlayer(player, () => saveTeam(team)); }
 }
 
 // Saves a player object into the database
@@ -83,4 +122,4 @@ var findTeamByName = (teamName, callback) => {
     });
 }
 
-module.exports = {savePlayer, findPlayerByName, createPlayer, createTeam}
+module.exports = {savePlayer, findPlayerByName, createPlayer, createTeam, changeTeam}

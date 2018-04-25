@@ -5,7 +5,8 @@ ObjectId = mongoose.Schema.Types.ObjectId;
 var TeamSchema = new Schema ({
     name: {type: String, lowercase: true},
     shortName: {type: String, lowercase: true},
-    playerIdList: [ObjectId]
+    playerIdList: [ObjectId],
+    imageUrl: {type: String, default: null}
 }, {
     versionKey: false
 });

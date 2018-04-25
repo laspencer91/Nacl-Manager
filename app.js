@@ -1,8 +1,8 @@
 var {MongoClient, ObjectId} = require('mongodb');
 const mongoose = require('mongoose');
+const readline = require('readline');
 
 var dbUtil = require('./db-utils/database');
-
 var { Player } = require('./mongo-models/Player.js');
 var { Match } = require('./mongo-models/Match.js');
 var { Team } = require('./mongo-models/Team.js');
@@ -34,6 +34,19 @@ let functionMap = new Map()
                 return;
             }
             dbUtil.createTeam(cmdParams[1], cmdParams[2]);
+        }).set("changeteam", () => {
+            if (cmdParams.length < 3) {
+                console.log("Error: You need to specify a player name and team name to move the player to.");
+                return;
+            }
+            dbUtil.changeTeam(cmdParams[1], cmdParams[2]);
+        }).set("reportmatch", () => {
+            // Report match 3
+            if (cmdParams.length < 3) {
+                console.log("Error: You need to specify a player name and team name to move the player to.");
+                return;
+            }
+            dbUtil.reportMatch(cmdParams[1], cmdParams[2]);
         });
 
 // Connection and Application Start

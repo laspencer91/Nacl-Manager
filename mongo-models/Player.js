@@ -4,7 +4,15 @@ ObjectId = mongoose.Schema.Types.ObjectId;
 
 var PlayerSchema = new Schema ({
     name: {type: String, lowercase: true},
-    teamId: ObjectId
+    teamId: ObjectId,
+    joinTeamDate: Date,
+    teamHistory: [
+      Schema({
+        teamId: ObjectId,
+        teamName: String,
+        leaveDate: Date
+      }, {_id: false})
+    ]
 }, {
   versionKey: false
 });
