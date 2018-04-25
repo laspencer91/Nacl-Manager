@@ -1,7 +1,8 @@
 var {MongoClient, ObjectId} = require('mongodb');
 const mongoose = require('mongoose');
-const readline = require('readline');
+const colors   = require("colors/safe");
 
+var repMatchCli = require('./cli/report-match-cli.js');
 var dbUtil = require('./db-utils/database');
 var { Player } = require('./mongo-models/Player.js');
 var { Match } = require('./mongo-models/Match.js');
@@ -46,9 +47,11 @@ let functionMap = new Map()
                 console.log("Error: You need to specify the command in the format 'creatematch week# negi spartans'");
                 return;
             }
-            dbUtil.findMatch(cmdParams[1], cmdParams[2], cmdParams[3], (match) => {
+            dbUtil.findMatch(cmdParams[1], cmdParams[2], cmdParams[3], (match, team1, team2) => {
                 if (!match) { console.log("A match could not be found for the given match number and team names"); return;}
-                 console.log(`Match found. Id: ${match.matchNumber}, ${match.team1Id}, vs: ${match.team2Id}`);
+                 console.log(`Match found. Id: ${match.matchNumber}, ${match.team1Name}, vs: ${match.team2Name}\n`);
+                
+                 repMatchCli.start(match, team1, team2);
             });
         });
 

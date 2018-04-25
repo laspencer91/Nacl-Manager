@@ -9,9 +9,10 @@
   "author": "Logan Spencer",
   "license": "ISC",
   "dependencies": {
+    "columnify": "^1.5.4",
     "mongodb": "^3.0.7",
     "mongoose": "^5.0.15",
-    "readline": "^1.3.0",
+    "prompt": "^1.0.0",
     "yargs": "^11.0.0"
   }
 }

@@ -126,7 +126,7 @@ var findMatch = (matchNum, team1, team2, callback) => {
                 ]
             }, (err, matchFound) => { 
                 if(err) return console.error(err); 
-                callback(matchFound) });
+                callback(matchFound, team1Found, team2Found) });
         })
     })
 }
@@ -139,6 +139,14 @@ var findPlayerByName = (playerName, callback) => {
     })
 }
 
+var findPlayersByIdArray = (ids, callback) => {
+    Player.find({}).where("_id").in(ids).exec((err, docs) => {
+        if (err) return console.error(err);
+    
+        callback(JSON.parse(JSON.stringify(docs)));
+    });
+}
+
 var findTeamByName = (teamName, callback) => {
     Team.findOne({$or: [
         {name: teamName},
@@ -149,4 +157,4 @@ var findTeamByName = (teamName, callback) => {
     });
 }
 
-module.exports = {savePlayer, findPlayerByName, createPlayer, createTeam, changeTeam, findMatch}
+module.exports = {savePlayer, findPlayerByName, createPlayer, createTeam, changeTeam, findMatch, findPlayersByIdArray}

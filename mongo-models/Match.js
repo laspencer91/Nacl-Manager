@@ -6,9 +6,12 @@ var MatchSchema = new Schema ({
     scheduledDate: Date,
     team1Id: ObjectId,
     team2Id: ObjectId,
+    team1Name: String, 
+    team2Name: String,
     playedDate: {type: Date, default: null},
     winnerId: {type: ObjectId, default: null},
-    roundsPlayed: {type: Number, default: 0},
+    team1Rounds: {type: Number, default: 0},
+    team2Rounds: {type: Number, default: 0},
     matchNumber: Number,
     team1PlayerStats: [{
         playerId: ObjectId,
