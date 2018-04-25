@@ -41,12 +41,15 @@ let functionMap = new Map()
             }
             dbUtil.changeTeam(cmdParams[1], cmdParams[2]);
         }).set("reportmatch", () => {
-            // Report match 3
-            if (cmdParams.length < 3) {
-                console.log("Error: You need to specify a player name and team name to move the player to.");
+            // Report match 3 negi 300
+            if (cmdParams.length < 4) {
+                console.log("Error: You need to specify the command in the format 'creatematch week# negi spartans'");
                 return;
             }
-            dbUtil.reportMatch(cmdParams[1], cmdParams[2]);
+            dbUtil.findMatch(cmdParams[1], cmdParams[2], cmdParams[3], (match) => {
+                if (!match) { console.log("A match could not be found for the given match number and team names"); return;}
+                 console.log(`Match found. Id: ${match.matchNumber}, ${match.team1Id}, vs: ${match.team2Id}`);
+            });
         });
 
 // Connection and Application Start

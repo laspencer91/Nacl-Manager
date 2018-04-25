@@ -104,6 +104,33 @@ var saveTeam = (team) => {
     });
 }
 
+/**
+ * Searches for a match with the given match number and the two team names
+ * @param {Number} matchNum 
+ * @param {String} team1 
+ * @param {String} team2 
+ * @param {Function} callback Provides the match found as an argument 
+ */
+var findMatch = (matchNum, team1, team2, callback) => {
+    findTeamByName(team1, (team1Found) => {
+        if (!team1Found) { LOGGER.logAndEnd(`The team ${team1} could not be found. Try again.`); return ;}
+
+        findTeamByName(team2, (team2Found) => {
+            if (!team2Found) { LOGGER.logAndEnd(`The team ${team2} could not be found. Try again.`); return ;}
+            
+            Match.findOne({
+                $and: [
+                        {matchNumber: matchNum}, 
+                        {$or: [{team1Id: team1Found._id}, {team1Id: team2Found._id}]},
+                        {$or: [{team2Id: team1Found._id}, {team2Id: team2Found._id}]}
+                ]
+            }, (err, matchFound) => { 
+                if(err) return console.error(err); 
+                callback(matchFound) });
+        })
+    })
+}
+
 var findPlayerByName = (playerName, callback) => {
     Player.findOne({name: playerName}, (err, playerFound) => {
         if (err) return console.error(err);
@@ -122,4 +149,4 @@ var findTeamByName = (teamName, callback) => {
     });
 }
 
-module.exports = {savePlayer, findPlayerByName, createPlayer, createTeam, changeTeam}
+module.exports = {savePlayer, findPlayerByName, createPlayer, createTeam, changeTeam, findMatch}
