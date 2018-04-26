@@ -7,4 +7,14 @@ function remove(array, element) {
     }
 }
 
-module.exports = { remove };
+function filterDuplicates(array) {
+    let dups = [];
+
+    for (let i = 0; i < array.length; i++) {
+        if (dups.indexOf(array[i]) != -1) 
+        { array.splice(i, 1); }
+        else { dups.push(array[i]); }
+    }
+}
+
+module.exports = { remove, filterDuplicates };
