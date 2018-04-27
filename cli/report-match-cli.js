@@ -4,8 +4,9 @@ var columnify  = require('columnify')
 
 const mongoose = require('mongoose');
 var { Player } = require('../mongo-models/Player.js');
+var matchSchema = require('../mongo-models/Match.js');
 
-var dbUtil = require('../db-utils/database');
+var dbUtil = require('../db-utils/database.js');
 var ArrUtil = require('../gen-utils/arrayUtil.js');
 
 /**
@@ -26,16 +27,16 @@ function start(match, team1, team2)
     printPromptMessage(`How Many Rounds Did Each Team Win? \n(1 - ${match.team1Name}  |  2 - ${match.team2Name})`);
     prompt.get(teamWinReplySchema , function (err, result) {
         if (err) return console.error(err);
-        info.team1Rounds = parseInt(result.Team_1_Rounds);
-        info.team2Rounds = parseInt(result.Team_2_Rounds);
-        if (info.team1Rounds > info.team2Rounds) info.winningTeam = 1; else info.winningTeam = 2;
-        
-        console.log("Team " + info.winningTeam + ' won.\n');
+
+        let winningTeam;
+        if (parseInt(result.Team_1_Rounds) > parseInt(result.Team_2_Rounds)) winningTeam = team1; else winningTeam = team2;
+        console.log("Team " + winningTeam.name.toUpperCase() + ' won.\n');
+
         printPromptMessage(`PLAYER LISTING..`);
         printTeamPlayers(team1, team2, (team1Players, team2Players) => {
 
             printPromptMessage("\n\nWould you like to report stats for the players of this match? (Y or N)");
-            prompt.get(reportStatsOptionSchema , function (err, reportAns) {
+            prompt.get(yesOrNoSchema , function (err, reportAns) {
 
                 if (reportAns.Answer.toUpperCase() === 'Y') {
                     printPromptMessage(`\nEnter information for ` + team1.name.toUpperCase());
@@ -53,7 +54,34 @@ function start(match, team1, team2)
                             console.log(team1OutputInfo);
                             printPromptMessage(`\n${team2.name.toUpperCase()}`);
                             console.log(team2OutputInfo);
-                            console.log("\nIs this information correct? Note that unknown names, duplicates, and entries with errors have been filtered out.")
+
+                            confirmInformation(team1, team2, result, () => {
+                                match.playedDate = Date.now();
+                                match.winnerId = winningTeam._id;
+                                match.team1Rounds = result.Team_1_Rounds;
+                                match.team2Rounds = result.Team_2_Rounds;
+                                addPlayerStatsToMatchTeam(match.team1PlayerStats, team1Players, team1StatsFormatted);
+                                addPlayerStatsToMatchTeam(match.team2PlayerStats, team2Players, team2StatsFormatted);
+
+                                dbUtil.saveMatch(match, () => {
+                                    mongoose.connection.close();
+                                    return;
+                                });
+                            });
+                        });
+                    });
+                }
+                else {
+                    // Save info without player info
+                    confirmInformation(team1, team2, result, () => {
+                        match.playedDate = Date.now();
+                        match.winnerId = winningTeam._id;
+                        match.team1Rounds = result.Team_1_Rounds;
+                        match.team2Rounds = result.Team_2_Rounds;
+
+                        dbUtil.saveMatch(match, () => {
+                            mongoose.connection.close();
+                            return;
                         });
                     });
                 }
@@ -62,12 +90,44 @@ function start(match, team1, team2)
     });
 }
 
+/**
+ * Add formatted array input of player stats into a Match Schema Model
+ * @param {Array} teamPlayerStats Array from a match mongoose schema
+ * @param {Array} teamPlayers List of players that must exist for the value to be added to this team
+ * @param {Array} formattedInputStats An array containing information to be input into Mongoose Match Schema
+ */
+function addPlayerStatsToMatchTeam(teamStatsArray, teamPlayers, formattedInputStats) {
+    for (let i = 0; i < formattedInputStats.length; i++) {
+        let singleStats = formattedInputStats[i];
+        let id = undefined;
+        teamPlayers.forEach(e => {if (e.name === singleStats[0]) id = e._id;})
+        if (id === undefined) {
+            console.log("Playername not found in this teams players list.. wierd..");
+            continue;
+        }
+        teamStatsArray.push(matchSchema.CreatePlayerStats(id, singleStats[0], singleStats[1], singleStats[2], singleStats[3]));
+    }
+}
+
+function confirmInformation(team1, team2, result, yesFunc) {
+    console.log(colors.magenta(`\n${team1.name.toUpperCase()} rounds won: ${result.Team_1_Rounds}`));
+    console.log(colors.magenta(`${team2.name.toUpperCase()} rounds won: ${result.Team_2_Rounds}`));
+    console.log("\nIs this information correct? Note that unknown names, duplicates, and entries with errors have been filtered out.")
+
+    prompt.get(yesOrNoSchema, function (err, infoCorrectAns) {
+        if (infoCorrectAns.Answer.toUpperCase() === 'Y') {
+            yesFunc()
+        }
+        else {console.log("Info NOT submitted."); mongoose.connection.close(); return; }
+    });
+}
+
 function CreateColumnFinalStats(teamStatsFormatted) {
     let output = [];
     for (let i = 0; i < teamStatsFormatted.length; i++) {
         output.push({
             name: teamStatsFormatted[i][0],
-            kils: teamStatsFormatted[i][1],
+            kills: teamStatsFormatted[i][1],
             assists: teamStatsFormatted[i][2],
             deaths: teamStatsFormatted[i][3]
         })
@@ -196,7 +256,7 @@ function CreatePlayerStatsSchema(teamPlayers) {
     }
 };
 
-var reportStatsOptionSchema = {
+var yesOrNoSchema = {
     properties: {
         Answer: {
         pattern: /^[ynYN]?$/,
